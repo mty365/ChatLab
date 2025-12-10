@@ -7,29 +7,66 @@
 
 /**
  * 消息类型枚举
+ *
+ * 分类说明：
+ * - 基础消息 (0-19): 常见的内容类型
+ * - 交互消息 (20-39): 涉及互动的消息类型
+ * - 系统消息 (80-89): 系统相关消息
+ * - 其他 (99): 未知或无法分类的消息
  */
 export enum MessageType {
+  // ========== 基础消息类型 (0-19) ==========
   TEXT = 0, // 文本消息
   IMAGE = 1, // 图片
   VOICE = 2, // 语音
   VIDEO = 3, // 视频
   FILE = 4, // 文件
   EMOJI = 5, // 表情包/贴纸
-  SYSTEM = 6, // 系统消息（入群/退群/撤回等）
-  OTHER = 99, // 其他
+  LINK = 7, // 链接/卡片（分享的网页、文章等）
+  LOCATION = 8, // 位置/地理位置
+
+  // ========== 交互消息类型 (20-39) ==========
+  RED_PACKET = 20, // 红包
+  TRANSFER = 21, // 转账
+  POKE = 22, // 拍一拍/戳一戳
+  CALL = 23, // 语音/视频通话
+  SHARE = 24, // 分享（音乐、小程序等）
+  REPLY = 25, // 引用回复
+  FORWARD = 26, // 转发消息
+
+  // ========== 系统消息类型 (80-89) ==========
+  SYSTEM = 80, // 系统消息（入群/退群/群公告等）
+  RECALL = 81, // 撤回消息
+
+  // ========== 其他 (99) ==========
+  OTHER = 99, // 其他/未知
 }
 
 /**
  * 消息类型名称映射
  */
 export const MESSAGE_TYPE_NAMES: Record<number, string> = {
+  // 基础消息类型
   [MessageType.TEXT]: '文字',
   [MessageType.IMAGE]: '图片',
   [MessageType.VOICE]: '语音',
   [MessageType.VIDEO]: '视频',
   [MessageType.FILE]: '文件',
   [MessageType.EMOJI]: '表情',
+  [MessageType.LINK]: '链接',
+  [MessageType.LOCATION]: '位置',
+  // 交互消息类型
+  [MessageType.RED_PACKET]: '红包',
+  [MessageType.TRANSFER]: '转账',
+  [MessageType.POKE]: '拍一拍',
+  [MessageType.CALL]: '通话',
+  [MessageType.SHARE]: '分享',
+  [MessageType.REPLY]: '回复',
+  [MessageType.FORWARD]: '转发',
+  // 系统消息类型
   [MessageType.SYSTEM]: '系统',
+  [MessageType.RECALL]: '撤回',
+  // 其他
   [MessageType.OTHER]: '其他',
 }
 

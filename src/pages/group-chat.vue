@@ -37,10 +37,10 @@ const isInitialLoad = ref(true) // 用于跳过初始加载时的 watch 触发�
 // Tab 配置
 const tabs = [
   { id: 'overview', label: '总览', icon: 'i-heroicons-chart-pie' },
-  // { id: 'ranking', label: '群榜单', icon: 'i-heroicons-trophy' },
+  { id: 'ranking', label: '群榜单', icon: 'i-heroicons-trophy' },
   { id: 'quotes', label: '群语录', icon: 'i-heroicons-chat-bubble-bottom-center-text' },
   { id: 'relationships', label: '群关系', icon: 'i-heroicons-heart' },
-  // { id: 'timeline', label: '群趋势', icon: 'i-heroicons-chart-bar' },
+  { id: 'timeline', label: '群趋势', icon: 'i-heroicons-chart-bar' },
   { id: 'members', label: '群成员', icon: 'i-heroicons-user-group' },
   { id: 'ai', label: 'AI实验室', icon: 'i-heroicons-sparkles' },
   { id: 'sql', label: 'SQL实验室', icon: 'i-heroicons-command-line' },

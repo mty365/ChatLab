@@ -103,7 +103,16 @@ interface MemberInfo {
 
 // ==================== 消息类型转换 ====================
 
-function convertMessageType(messageType: number | undefined, content: V4Message['content']): MessageType {
+function convertMessageType(
+  messageType: number | undefined,
+  content: V4Message['content'],
+  isRecalled?: boolean
+): MessageType {
+  // 撤回消息
+  if (isRecalled) {
+    return MessageType.RECALL
+  }
+
   // 检查资源类型
   if (content.resources && content.resources.length > 0) {
     const resourceType = content.resources[0].type
@@ -117,12 +126,57 @@ function convertMessageType(messageType: number | undefined, content: V4Message[
         return MessageType.VOICE
       case 'file':
         return MessageType.FILE
+      case 'location':
+        return MessageType.LOCATION
     }
   }
 
   // 检查 emojis 字段
   if (content.emojis && content.emojis.length > 0) {
     return MessageType.EMOJI
+  }
+
+  // 根据文本内容判断特殊消息类型
+  const text = content.text?.trim() || ''
+
+  // 红包消息
+  if (text.includes('QQ红包') || text.includes('发出了红包') || text === '[红包]') {
+    return MessageType.RED_PACKET
+  }
+
+  // 转账消息
+  if (text.includes('转账') || text === '[转账]') {
+    return MessageType.TRANSFER
+  }
+
+  // 拍一拍/戳一戳
+  if (text.includes('拍了拍') || text.includes('戳了戳') || text === '[拍一拍]') {
+    return MessageType.POKE
+  }
+
+  // 通话消息
+  if (text.includes('语音通话') || text.includes('视频通话') || text.includes('通话时长')) {
+    return MessageType.CALL
+  }
+
+  // 分享消息
+  if (text === '[分享]' || text === '[音乐]' || text === '[小程序]') {
+    return MessageType.SHARE
+  }
+
+  // 链接/卡片消息
+  if (text === '[链接]' || text === '[卡片消息]') {
+    return MessageType.LINK
+  }
+
+  // 位置消息
+  if (text === '[位置]' || text === '[地理位置]') {
+    return MessageType.LOCATION
+  }
+
+  // 转发消息
+  if (text === '[转发]' || text === '[聊天记录]') {
+    return MessageType.FORWARD
   }
 
   // 根据 messageType 判断
@@ -136,7 +190,7 @@ function convertMessageType(messageType: number | undefined, content: V4Message[
     case 7:
       return MessageType.VIDEO
     case 9:
-      return MessageType.TEXT // 回复消息
+      return MessageType.REPLY // 回复消息
     default:
       return MessageType.TEXT
   }
@@ -250,7 +304,9 @@ async function* parseV4(options: ParseOptions): AsyncGenerator<ParseEvent, void,
       if (timestamp === null || !isValidYear(timestamp)) return null
 
       // 消息类型
-      const type = msg.isSystemMessage ? MessageType.SYSTEM : convertMessageType(msg.messageType, msg.content)
+      const type = msg.isSystemMessage
+        ? MessageType.SYSTEM
+        : convertMessageType(msg.messageType, msg.content, msg.isRecalled)
 
       // 文本内容
       let textContent = msg.content?.text || ''

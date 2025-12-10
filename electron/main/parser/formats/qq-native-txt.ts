@@ -67,12 +67,41 @@ const GROUP_NAME_REGEX = /^消息对象:(.+)$/
 
 function detectMessageType(content: string): MessageType {
   const trimmed = content.trim()
+
+  // 基础消息类型
   if (trimmed === '[图片]') return MessageType.IMAGE
   if (trimmed === '[表情]') return MessageType.EMOJI
   if (trimmed === '[语音]') return MessageType.VOICE
   if (trimmed === '[视频]') return MessageType.VIDEO
   if (trimmed === '[文件]') return MessageType.FILE
+  if (trimmed === '[位置]' || trimmed === '[地理位置]') return MessageType.LOCATION
+  if (trimmed === '[链接]' || trimmed === '[卡片消息]') return MessageType.LINK
+
+  // 交互消息类型
+  if (trimmed === '[红包]' || trimmed.includes('发出了红包')) return MessageType.RED_PACKET
+  if (trimmed === '[转账]' || trimmed.includes('向你转账')) return MessageType.TRANSFER
+  if (trimmed.includes('拍了拍') || trimmed === '[拍一拍]') return MessageType.POKE
+  if (trimmed === '[语音通话]' || trimmed === '[视频通话]' || trimmed.includes('通话时长')) return MessageType.CALL
+  if (trimmed === '[分享]' || trimmed === '[音乐]' || trimmed === '[小程序]') return MessageType.SHARE
+  if (trimmed.startsWith('[回复]')) return MessageType.REPLY
+  if (trimmed === '[转发]' || trimmed === '[聊天记录]') return MessageType.FORWARD
+
+  // 系统消息类型
+  if (trimmed.includes('撤回了一条消息') || trimmed === '[撤回]') return MessageType.RECALL
+  if (
+    trimmed.includes('加入了群聊') ||
+    trimmed.includes('退出了群聊') ||
+    trimmed.includes('被移出群聊') ||
+    trimmed.includes('修改了群名称') ||
+    trimmed.includes('成为新群主') ||
+    trimmed.includes('群公告')
+  ) {
+    return MessageType.SYSTEM
+  }
+
+  // 其他方括号包裹的特殊消息
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) return MessageType.OTHER
+
   return MessageType.TEXT
 }
 
@@ -144,7 +173,8 @@ async function* parseTxt(options: ParseOptions): AsyncGenerator<ParseEvent, void
 
       messages.push({
         senderPlatformId: currentMessage.platformId,
-        senderName: currentMessage.nickname, // 用于昵称历史追踪
+        senderAccountName: currentMessage.nickname, // QQ TXT 格式只有一个昵称，作为账号名称追踪历史
+        // 不设置 senderGroupNickname，避免同一昵称被重复追踪
         timestamp: currentMessage.timestamp,
         type,
         content: content || null,
@@ -246,11 +276,11 @@ async function* parseTxt(options: ParseOptions): AsyncGenerator<ParseEvent, void
   }
   yield { type: 'meta', data: meta }
 
-  // 发送成员（name 使用 platformId，nickname 使用群昵称）
+  // 发送成员（QQ TXT 格式只有一个昵称，只设置 accountName 避免重复追踪）
   const members: ParsedMember[] = Array.from(memberMap.values()).map((m) => ({
     platformId: m.platformId,
-    name: m.platformId, // name 使用 ID
-    nickname: m.nickname, // nickname 使用群昵称
+    accountName: m.nickname, // QQ TXT 格式只有昵称，作为账号名称
+    // 不设置 groupNickname，避免同一昵称被重复追踪
   }))
   yield { type: 'members', data: members }
 

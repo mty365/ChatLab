@@ -30,9 +30,11 @@ export function getRepeatAnalysis(sessionId: string, filter?: TimeFilter): any {
 
   let whereClause = clause
   if (whereClause.includes('WHERE')) {
-    whereClause += " AND COALESCE(m.account_name, '') != '系统消息' AND msg.type = 0 AND msg.content IS NOT NULL AND TRIM(msg.content) != ''"
+    whereClause +=
+      " AND COALESCE(m.account_name, '') != '系统消息' AND msg.type = 0 AND msg.content IS NOT NULL AND TRIM(msg.content) != ''"
   } else {
-    whereClause = " WHERE COALESCE(m.account_name, '') != '系统消息' AND msg.type = 0 AND msg.content IS NOT NULL AND TRIM(msg.content) != ''"
+    whereClause =
+      " WHERE COALESCE(m.account_name, '') != '系统消息' AND msg.type = 0 AND msg.content IS NOT NULL AND TRIM(msg.content) != ''"
   }
 
   const messages = db
@@ -310,7 +312,7 @@ export function getCatchphraseAnalysis(sessionId: string, filter?: TimeFilter): 
     }
 
     const member = memberMap.get(row.memberId)!
-    if (member.catchphrases.length < 5) {
+    if (member.catchphrases.length < 10) {
       member.catchphrases.push({
         content: row.content,
         count: row.count,
@@ -327,4 +329,3 @@ export function getCatchphraseAnalysis(sessionId: string, filter?: TimeFilter): 
 
   return { members }
 }
-
