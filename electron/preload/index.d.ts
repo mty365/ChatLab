@@ -24,6 +24,8 @@ import type {
   MergeParams,
   MergeResult,
   MemberWithStats,
+  TableSchema,
+  SQLResult,
 } from '../../src/types/chat'
 
 interface TimeFilter {
@@ -67,6 +69,9 @@ interface ChatApi {
   getMembers: (sessionId: string) => Promise<MemberWithStats[]>
   updateMemberAliases: (sessionId: string, memberId: number, aliases: string[]) => Promise<boolean>
   deleteMember: (sessionId: string, memberId: number) => Promise<boolean>
+  // SQL 实验室
+  getSchema: (sessionId: string) => Promise<TableSchema[]>
+  executeSQL: (sessionId: string, sql: string) => Promise<SQLResult>
 }
 
 interface Api {

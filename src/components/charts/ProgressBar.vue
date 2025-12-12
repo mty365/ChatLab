@@ -7,7 +7,7 @@ interface Props {
   animated?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   color: 'from-pink-400 to-pink-600',
   height: 8,
   showLabel: false,

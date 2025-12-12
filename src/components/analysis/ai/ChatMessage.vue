@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import dayjs from 'dayjs'
 import MarkdownIt from 'markdown-it'
 import userAvatar from '@/assets/images/momo.png'
-import type { ContentBlock } from '@/composables/useAIChat'
+import type { ContentBlock, ToolBlockContent } from '@/composables/useAIChat'
 
 // Props
 const props = defineProps<{
@@ -79,7 +79,7 @@ function formatTimeParams(params: Record<string, unknown>): string {
 }
 
 // 格式化工具参数显示
-function formatToolParams(tool: ContentBlock extends { type: 'tool'; tool: infer T } ? T : never): string {
+function formatToolParams(tool: ToolBlockContent): string {
   if (!tool.params) return ''
 
   const name = tool.name

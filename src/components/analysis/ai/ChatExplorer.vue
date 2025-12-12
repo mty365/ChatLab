@@ -171,12 +171,6 @@ function handleDeleteConversation(convId: string) {
   }
 }
 
-// 格式化时间戳
-function formatTimestamp(ts: number): string {
-  const date = new Date(ts * 1000)
-  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
-}
-
 // 初始化
 onMounted(async () => {
   await checkLLMConfig()

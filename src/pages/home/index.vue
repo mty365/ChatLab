@@ -196,7 +196,7 @@ function getProgressDetail(): string {
             class="w-full max-w-4xl"
             @files="handleFileDrop"
           >
-            <template #default="{ isDragOver, openFileDialog }">
+            <template #default="{ isDragOver }">
               <div
                 class="group relative flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-pink-300/50 bg-white/50 px-8 py-8 backdrop-blur-sm transition-all duration-300 hover:border-pink-400 hover:bg-white/80 hover:shadow-lg hover:shadow-pink-500/10 focus:outline-none focus:ring-4 focus:ring-pink-500/20 sm:px-12 sm:py-12 dark:border-pink-700/50 dark:bg-gray-900/50 dark:hover:border-pink-500 dark:hover:bg-gray-900/80"
                 :class="{

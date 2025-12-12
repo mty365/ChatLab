@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AnchorItem } from '@/composables'
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     /** 锚点配置列表 */
     anchors: AnchorItem[]

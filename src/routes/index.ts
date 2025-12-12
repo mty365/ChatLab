@@ -26,7 +26,7 @@ export const router = createRouter({
   history: createWebHashHistory(),
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((_to, _from, next) => {
   next()
 })
 

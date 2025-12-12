@@ -17,17 +17,19 @@ export interface ToolCallRecord {
   params?: Record<string, unknown>
 }
 
+export interface ToolBlockContent {
+  name: string
+  displayName: string
+  status: 'running' | 'done' | 'error'
+  params?: Record<string, unknown>
+}
+
 // 内容块类型（用于 AI 消息的流式混合渲染）
 export type ContentBlock =
   | { type: 'text'; text: string }
   | {
       type: 'tool'
-      tool: {
-        name: string
-        displayName: string
-        status: 'running' | 'done' | 'error'
-        params?: Record<string, unknown>
-      }
+      tool: ToolBlockContent
     }
 
 // 消息类型
@@ -152,7 +154,6 @@ export function useAIChat(
       toolCalls: [], // 工具调用会在这里更新
     }
     messages.value.push(userMessage)
-    const userMessageIndex = messages.value.length - 1
     console.log('[AI] 已添加用户消息')
 
     // 开始处理
@@ -259,89 +260,98 @@ export function useAIChat(
           content: msg.content,
         }))
 
-      console.log('[AI] 调用 Agent API...', context, 'historyLength:', historyMessages.length, 'chatType:', chatType, 'promptConfig:', currentPromptConfig.value)
+      console.log(
+        '[AI] 调用 Agent API...',
+        context,
+        'historyLength:',
+        historyMessages.length,
+        'chatType:',
+        chatType,
+        'promptConfig:',
+        currentPromptConfig.value
+      )
 
       // 获取 requestId 和 promise（传递历史消息、聊天类型和提示词配置）
       const { requestId: agentReqId, promise: agentPromise } = window.agentApi.runStream(
         content,
         context,
         (chunk) => {
-        // 如果已中止或请求 ID 不匹配，忽略后续 chunks
-        if (isAborted || thisRequestId !== currentRequestId) {
-          console.log('[AI] 已中止或请求已过期，忽略 chunk', {
-            isAborted,
-            thisRequestId,
-            currentRequestId,
-          })
-          return
-        }
+          // 如果已中止或请求 ID 不匹配，忽略后续 chunks
+          if (isAborted || thisRequestId !== currentRequestId) {
+            console.log('[AI] 已中止或请求已过期，忽略 chunk', {
+              isAborted,
+              thisRequestId,
+              currentRequestId,
+            })
+            return
+          }
 
-        // 只在工具调用时记录，减少日志噪音
-        if (chunk.type === 'tool_start' || chunk.type === 'tool_result') {
-          console.log('[AI] Agent chunk:', chunk.type, chunk.toolName)
-        }
+          // 只在工具调用时记录，减少日志噪音
+          if (chunk.type === 'tool_start' || chunk.type === 'tool_result') {
+            console.log('[AI] Agent chunk:', chunk.type, chunk.toolName)
+          }
 
-        switch (chunk.type) {
-          case 'content':
-            // 流式内容更新 - 追加到 contentBlocks
-            if (chunk.content) {
-              currentToolStatus.value = null
-              appendTextToBlocks(chunk.content)
-            }
-            break
-
-          case 'tool_start':
-            // 工具开始执行 - 添加工具块到 contentBlocks
-            console.log('[AI] 工具开始执行:', chunk.toolName, chunk.toolParams)
-            if (chunk.toolName) {
-              const toolParams = chunk.toolParams as Record<string, unknown> | undefined
-              currentToolStatus.value = {
-                name: chunk.toolName,
-                displayName: TOOL_DISPLAY_NAMES[chunk.toolName] || chunk.toolName,
-                status: 'running',
+          switch (chunk.type) {
+            case 'content':
+              // 流式内容更新 - 追加到 contentBlocks
+              if (chunk.content) {
+                currentToolStatus.value = null
+                appendTextToBlocks(chunk.content)
               }
-              toolsUsedInCurrentRound.value.push(chunk.toolName)
+              break
 
-              // 添加工具块到 AI 消息的 contentBlocks
-              addToolBlock(chunk.toolName, toolParams)
-            }
-            break
+            case 'tool_start':
+              // 工具开始执行 - 添加工具块到 contentBlocks
+              console.log('[AI] 工具开始执行:', chunk.toolName, chunk.toolParams)
+              if (chunk.toolName) {
+                const toolParams = chunk.toolParams as Record<string, unknown> | undefined
+                currentToolStatus.value = {
+                  name: chunk.toolName,
+                  displayName: TOOL_DISPLAY_NAMES[chunk.toolName] || chunk.toolName,
+                  status: 'running',
+                }
+                toolsUsedInCurrentRound.value.push(chunk.toolName)
 
-          case 'tool_result':
-            // 工具执行结果 - 更新工具块状态
-            console.log('[AI] 工具执行结果:', chunk.toolName, chunk.toolResult)
-            if (chunk.toolName) {
-              if (currentToolStatus.value?.name === chunk.toolName) {
+                // 添加工具块到 AI 消息的 contentBlocks
+                addToolBlock(chunk.toolName, toolParams)
+              }
+              break
+
+            case 'tool_result':
+              // 工具执行结果 - 更新工具块状态
+              console.log('[AI] 工具执行结果:', chunk.toolName, chunk.toolResult)
+              if (chunk.toolName) {
+                if (currentToolStatus.value?.name === chunk.toolName) {
+                  currentToolStatus.value = {
+                    ...currentToolStatus.value,
+                    status: 'done',
+                  }
+                }
+                // 更新 contentBlocks 中的工具块状态
+                updateToolBlockStatus(chunk.toolName, 'done')
+              }
+              isLoadingSource.value = false
+              break
+
+            case 'done':
+              // 完成
+              console.log('[AI] Agent 完成')
+              currentToolStatus.value = null
+              break
+
+            case 'error':
+              // 错误
+              console.error('[AI] Agent 错误:', chunk.error)
+              if (currentToolStatus.value) {
                 currentToolStatus.value = {
                   ...currentToolStatus.value,
-                  status: 'done',
+                  status: 'error',
                 }
+                // 更新对应工具块状态为错误
+                updateToolBlockStatus(currentToolStatus.value.name, 'error')
               }
-              // 更新 contentBlocks 中的工具块状态
-              updateToolBlockStatus(chunk.toolName, 'done')
-            }
-            isLoadingSource.value = false
-            break
-
-          case 'done':
-            // 完成
-            console.log('[AI] Agent 完成')
-            currentToolStatus.value = null
-            break
-
-          case 'error':
-            // 错误
-            console.error('[AI] Agent 错误:', chunk.error)
-            if (currentToolStatus.value) {
-              currentToolStatus.value = {
-                ...currentToolStatus.value,
-                status: 'error',
-              }
-              // 更新对应工具块状态为错误
-              updateToolBlockStatus(currentToolStatus.value.name, 'error')
-            }
-            break
-        }
+              break
+          }
         },
         historyMessages,
         chatType,
@@ -458,13 +468,16 @@ export function useAIChat(
       const history = await window.aiApi.getMessages(conversationId)
       currentConversationId.value = conversationId
 
-      console.log('[AI] 从数据库加载的原始消息:', history.map((m) => ({
-        id: m.id,
-        role: m.role,
-        contentLength: m.content?.length,
-        hasContentBlocks: !!m.contentBlocks,
-        contentBlocksLength: m.contentBlocks?.length,
-      })))
+      console.log(
+        '[AI] 从数据库加载的原始消息:',
+        history.map((m) => ({
+          id: m.id,
+          role: m.role,
+          contentLength: m.content?.length,
+          hasContentBlocks: !!m.contentBlocks,
+          contentBlocksLength: m.contentBlocks?.length,
+        }))
+      )
 
       messages.value = history.map((msg) => ({
         id: msg.id,

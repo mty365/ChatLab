@@ -60,8 +60,8 @@ onMounted(() => {
   unsubscribeProgress = window.mergeApi.onParseProgress(({ filePath, progress }) => {
     const file = files.value.find((f) => f.path === filePath)
     if (file && file.status === 'pending') {
-      // 使用 percentage 而不是 progress（更准确）
-      file.progress = progress.percentage ?? progress.progress ?? 0
+      // 使用 progress
+      file.progress = progress.progress ?? 0
       // 构建更详细的进度消息
       if (progress.messagesProcessed && progress.messagesProcessed > 0) {
         file.progressMessage = `已处理 ${progress.messagesProcessed.toLocaleString()} 条消息`
@@ -407,7 +407,7 @@ const file2Name = computed(() => files.value[1]?.name || '文件 2')
 
           <!-- 拖拽上传区域 -->
           <FileDropZone multiple :accept="['.json', '.txt']" :disabled="isLoading" @files="handleFileDrop">
-            <template #default="{ isDragOver, openFileDialog }">
+            <template #default="{ isDragOver }">
               <div
                 class="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-6 transition-all hover:border-primary-400 hover:bg-primary-50/50 dark:border-gray-600 dark:hover:border-primary-500 dark:hover:bg-primary-900/10"
                 :class="{
