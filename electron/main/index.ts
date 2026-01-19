@@ -128,8 +128,8 @@ class MainProcess {
       // 获取当前主题状态
       const isDark = nativeTheme.shouldUseDarkColors
       windowOptions.titleBarOverlay = {
-        // 背景透明
-        color: '#00000000',
+        // 背景色与应用背景匹配，确保 hover 效果正确
+        color: isDark ? '#111827' : '#f9fafb', // dark: gray-900, light: gray-50
         // 图标颜色适配主题
         symbolColor: isDark ? '#a1a1aa' : '#52525b', // dark: zinc-400, light: zinc-600
         height: 32,
@@ -148,18 +148,18 @@ class MainProcess {
       if (platform.isWindows) {
         const isDark = nativeTheme.shouldUseDarkColors
         this.mainWindow?.setTitleBarOverlay({
-          color: '#00000000', // 透明背景
+          color: isDark ? '#111827' : '#f9fafb', // dark: gray-900, light: gray-50
           symbolColor: isDark ? '#a1a1aa' : '#52525b', // dark: zinc-400, light: zinc-600
           height: 32,
         })
 
-        // 监听主题变化，动态更新图标颜色
+        // 监听主题变化，动态更新颜色
         nativeTheme.on('updated', () => {
           if (this.mainWindow && platform.isWindows) {
             const isDark = nativeTheme.shouldUseDarkColors
             this.mainWindow.setTitleBarOverlay({
-              color: '#00000000',
-              symbolColor: isDark ? '#a1a1aa' : '#52525b',
+              color: isDark ? '#111827' : '#f9fafb', // dark: gray-900, light: gray-50
+              symbolColor: isDark ? '#a1a1aa' : '#52525b', // dark: zinc-400, light: zinc-600
               height: 32,
             })
           }
