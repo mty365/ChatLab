@@ -339,6 +339,21 @@ export function registerChatHandlers(ctx: IpcContext): void {
   )
 
   /**
+   * 获取消息长度分布
+   */
+  ipcMain.handle(
+    'chat:getMessageLengthDistribution',
+    async (_, sessionId: string, filter?: { startTs?: number; endTs?: number }) => {
+      try {
+        return await worker.getMessageLengthDistribution(sessionId, filter)
+      } catch (error) {
+        console.error('获取消息长度分布失败：', error)
+        return []
+      }
+    }
+  )
+
+  /**
    * 获取消息类型分布
    */
   ipcMain.handle(

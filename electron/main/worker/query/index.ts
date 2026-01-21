@@ -12,6 +12,7 @@ export {
   getWeekdayActivity,
   getMonthlyActivity,
   getYearlyActivity,
+  getMessageLengthDistribution,
   getMessageTypeDistribution,
   getTimeRange,
   getMemberNameHistory,

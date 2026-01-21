@@ -28,6 +28,8 @@ const hourlyActivity = ref<HourlyActivity[]>([])
 const weekdayActivity = ref<WeekdayActivity[]>([])
 const monthlyActivity = ref<MonthlyActivity[]>([])
 const yearlyActivity = ref<Array<{ year: number; messageCount: number }>>([])
+const lengthDetail = ref<Array<{ len: number; count: number }>>([])
+const lengthGrouped = ref<Array<{ range: string; count: number }>>([])
 
 // 星期名称（按 1=周一 到 7=周日 的顺序）
 const weekdayNames = computed(() => [
@@ -154,6 +156,22 @@ const yearlyChartData = computed<EChartBarData>(() => {
   }
 })
 
+// 消息长度详细分布图表数据（1-25字逐字）
+const lengthDetailChartData = computed<EChartBarData>(() => {
+  return {
+    labels: lengthDetail.value.map((d) => String(d.len)),
+    values: lengthDetail.value.map((d) => d.count),
+  }
+})
+
+// 消息长度分组分布图表数据（每5字一组）
+const lengthGroupedChartData = computed<EChartBarData>(() => {
+  return {
+    labels: lengthGrouped.value.map((d) => d.range),
+    values: lengthGrouped.value.map((d) => d.count),
+  }
+})
+
 // 热力图数据（小时 x 星期）- 转换为 ECharts 热力图格式
 const heatmapChartData = computed<EChartHeatmapData>(() => {
   // X 轴：24 小时
@@ -187,12 +205,13 @@ async function loadData() {
 
   isLoading.value = true
   try {
-    const [types, hourly, weekday, monthly, yearly] = await Promise.all([
+    const [types, hourly, weekday, monthly, yearly, lengthData] = await Promise.all([
       window.chatApi.getMessageTypeDistribution(props.sessionId, props.timeFilter),
       window.chatApi.getHourlyActivity(props.sessionId, props.timeFilter),
       window.chatApi.getWeekdayActivity(props.sessionId, props.timeFilter),
       window.chatApi.getMonthlyActivity(props.sessionId, props.timeFilter),
       window.chatApi.getYearlyActivity(props.sessionId, props.timeFilter),
+      window.chatApi.getMessageLengthDistribution(props.sessionId, props.timeFilter),
     ])
 
     messageTypes.value = types
@@ -200,6 +219,8 @@ async function loadData() {
     weekdayActivity.value = weekday
     monthlyActivity.value = monthly
     yearlyActivity.value = yearly
+    lengthDetail.value = lengthData.detail
+    lengthGrouped.value = lengthData.grouped
   } catch (error) {
     console.error('加载消息视图数据失败:', error)
   } finally {
@@ -332,15 +353,42 @@ watch(
         </div>
       </SectionCard>
 
-      <!-- 消息长度分布 (占位) -->
-      <SectionCard :title="t('lengthDistribution')" :show-divider="false">
-        <div class="flex h-48 items-center justify-center">
-          <div class="text-center">
-            <UIcon name="i-heroicons-chart-bar" class="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" />
-            <p class="mt-2 text-sm text-gray-400">{{ t('comingSoon') }}</p>
+      <!-- 消息长度分布（左右两图） -->
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- 左侧：1-25字逐字分布 -->
+        <SectionCard :title="t('lengthDetailTitle')" :show-divider="false">
+          <template #headerRight>
+            <span class="text-xs text-gray-400">{{ t('lengthDetailHint') }}</span>
+          </template>
+          <div class="p-5">
+            <EChartBar
+              v-if="lengthDetailChartData.values.some((v) => v > 0)"
+              :data="lengthDetailChartData"
+              :height="200"
+            />
+            <div v-else class="flex h-48 items-center justify-center text-gray-400">
+              {{ t('noTextMessages') }}
+            </div>
           </div>
-        </div>
-      </SectionCard>
+        </SectionCard>
+
+        <!-- 右侧：分组分布 -->
+        <SectionCard :title="t('lengthGroupedTitle')" :show-divider="false">
+          <template #headerRight>
+            <span class="text-xs text-gray-400">{{ t('lengthGroupedHint') }}</span>
+          </template>
+          <div class="p-5">
+            <EChartBar
+              v-if="lengthGroupedChartData.values.some((v) => v > 0)"
+              :data="lengthGroupedChartData"
+              :height="200"
+            />
+            <div v-else class="flex h-48 items-center justify-center text-gray-400">
+              {{ t('noTextMessages') }}
+            </div>
+          </div>
+        </SectionCard>
+      </div>
 
       <!-- 双方类型对比 (占位) -->
       <SectionCard :title="t('memberTypeComparison')" :show-divider="false">
@@ -365,7 +413,11 @@ watch(
     "yearlyDistribution": "年份分布",
     "timeHeatmap": "时间热力图",
     "heatmapHint": "展示聊天时间规律",
-    "lengthDistribution": "消息长度分布",
+    "lengthDetailTitle": "短消息分布 (1-25字)",
+    "lengthDetailHint": "逐字统计",
+    "lengthGroupedTitle": "长度区间分布",
+    "lengthGroupedHint": "每5字一组",
+    "noTextMessages": "暂无文字消息",
     "memberTypeComparison": "双方类型对比",
     "noData": "暂无数据",
     "comingSoon": "功能开发中...",
@@ -401,7 +453,11 @@ watch(
     "yearlyDistribution": "Yearly Distribution",
     "timeHeatmap": "Time Heatmap",
     "heatmapHint": "Shows chat time patterns",
-    "lengthDistribution": "Message Length Distribution",
+    "lengthDetailTitle": "Short Messages (1-25 chars)",
+    "lengthDetailHint": "Per character",
+    "lengthGroupedTitle": "Length Range Distribution",
+    "lengthGroupedHint": "Grouped by 5",
+    "noTextMessages": "No text messages",
     "memberTypeComparison": "Member Type Comparison",
     "noData": "No data",
     "comingSoon": "Coming soon...",

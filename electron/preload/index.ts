@@ -194,6 +194,19 @@ const chatApi = {
   },
 
   /**
+   * 获取消息长度分布
+   */
+  getMessageLengthDistribution: (
+    sessionId: string,
+    filter?: { startTs?: number; endTs?: number }
+  ): Promise<{
+    detail: Array<{ len: number; count: number }>
+    grouped: Array<{ range: string; count: number }>
+  }> => {
+    return ipcRenderer.invoke('chat:getMessageLengthDistribution', sessionId, filter)
+  },
+
+  /**
    * 获取消息类型分布
    */
   getMessageTypeDistribution: (

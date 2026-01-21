@@ -83,6 +83,13 @@ interface ChatApi {
     sessionId: string,
     filter?: TimeFilter
   ) => Promise<Array<{ year: number; messageCount: number }>>
+  getMessageLengthDistribution: (
+    sessionId: string,
+    filter?: TimeFilter
+  ) => Promise<{
+    detail: Array<{ len: number; count: number }>
+    grouped: Array<{ range: string; count: number }>
+  }>
   getMessageTypeDistribution: (
     sessionId: string,
     filter?: TimeFilter
