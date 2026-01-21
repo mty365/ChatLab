@@ -66,6 +66,36 @@ const typeChartData = computed<EChartPieData>(() => {
   }
 })
 
+// 消息类型摘要数据（用于右侧列表展示）
+const typeSummary = computed(() => {
+  const total = messageTypes.value.reduce((sum, t) => sum + t.count, 0)
+  const sorted = [...messageTypes.value].sort((a, b) => b.count - a.count)
+
+  return sorted.map((item) => ({
+    name: getMessageTypeName(item.type),
+    count: item.count,
+    percentage: total > 0 ? Math.round((item.count / total) * 100) : 0,
+  }))
+})
+
+// 类型颜色（与 EChartPie 保持一致）
+const typeColors = [
+  '#6366f1', // indigo
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#f43f5e', // rose
+  '#f97316', // orange
+  '#eab308', // yellow
+  '#22c55e', // green
+  '#14b8a6', // teal
+  '#06b6d4', // cyan
+  '#3b82f6', // blue
+]
+
+function getTypeColor(index: number): string {
+  return typeColors[index % typeColors.length]
+}
+
 // 小时分布图表数据
 const hourlyChartData = computed<EChartBarData>(() => {
   // 补全 24 小时数据
@@ -198,7 +228,53 @@ watch(
       <!-- 消息类型分布 -->
       <SectionCard :title="t('typeDistribution')" :show-divider="false">
         <div class="p-5">
-          <EChartPie v-if="typeChartData.values.length > 0" :data="typeChartData" :height="280" />
+          <div v-if="typeChartData.values.length > 0" class="flex flex-col gap-6 lg:flex-row lg:items-center">
+            <!-- 左侧饼图 -->
+            <div class="lg:w-1/2">
+              <EChartPie :data="typeChartData" :height="280" :show-legend="false" />
+            </div>
+            <!-- 右侧摘要列表 -->
+            <div class="lg:w-1/2">
+              <div class="space-y-3">
+                <div
+                  v-for="(item, index) in typeSummary"
+                  :key="index"
+                  class="flex items-center gap-3"
+                >
+                  <!-- 颜色标记 -->
+                  <div
+                    class="h-3 w-3 shrink-0 rounded-full"
+                    :style="{ backgroundColor: getTypeColor(index) }"
+                  />
+                  <!-- 类型名称 -->
+                  <div class="min-w-20 shrink-0 text-sm text-gray-700 dark:text-gray-300">
+                    {{ item.name }}
+                  </div>
+                  <!-- 进度条 -->
+                  <div class="flex-1">
+                    <div class="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                      <div
+                        class="h-full rounded-full transition-all"
+                        :style="{
+                          width: `${item.percentage}%`,
+                          backgroundColor: getTypeColor(index),
+                        }"
+                      />
+                    </div>
+                  </div>
+                  <!-- 数量和占比 -->
+                  <div class="shrink-0 text-right">
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ item.count.toLocaleString() }}
+                    </span>
+                    <span class="ml-1 text-xs text-gray-400">
+                      ({{ item.percentage }}%)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div v-else class="flex h-48 items-center justify-center text-gray-400">
             {{ t('noData') }}
           </div>

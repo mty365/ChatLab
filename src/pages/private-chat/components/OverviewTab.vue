@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AnalysisSession, MessageType } from '@/types/base'
 import { getMessageTypeName } from '@/types/base'
-import type { MemberActivity, HourlyActivity, DailyActivity, WeekdayActivity, MonthlyActivity } from '@/types/analysis'
+import type { MemberActivity, HourlyActivity, DailyActivity, WeekdayActivity } from '@/types/analysis'
 import { EChartPie } from '@/components/charts'
 import type { EChartPieData } from '@/components/charts'
 import { SectionCard } from '@/components/UI'
@@ -11,7 +11,6 @@ import { useOverviewStatistics } from '@/composables/analysis/useOverviewStatist
 import { useDailyTrend } from '@/composables/analysis/useDailyTrend'
 import OverviewStatCards from '@/components/analysis/Overview/OverviewStatCards.vue'
 import OverviewIdentityCard from '@/components/analysis/Overview/OverviewIdentityCard.vue'
-import ActivityTimeDistribution from '@/components/analysis/Overview/ActivityTimeDistribution.vue'
 import DailyTrendCard from '@/components/analysis/Overview/DailyTrendCard.vue'
 
 const { t } = useI18n()
@@ -29,9 +28,8 @@ const props = defineProps<{
   timeFilter?: { startTs?: number; endTs?: number }
 }>()
 
-// 星期活跃度数据
+// 星期活跃度数据（用于统计信息计算）
 const weekdayActivity = ref<WeekdayActivity[]>([])
-const isLoadingWeekday = ref(false)
 
 // 使用 Composables
 const {
@@ -99,33 +97,13 @@ const comparisonChartData = computed<EChartPieData>(() => {
   }
 })
 
-// 月份活跃度数据
-const monthlyActivity = ref<MonthlyActivity[]>([])
-const isLoadingMonthly = ref(false)
-
-// 加载星期活跃度数据
+// 加载星期活跃度数据（用于统计信息计算）
 async function loadWeekdayActivity() {
   if (!props.session.id) return
-  isLoadingWeekday.value = true
   try {
     weekdayActivity.value = await window.chatApi.getWeekdayActivity(props.session.id, props.timeFilter)
   } catch (error) {
     console.error('加载星期活跃度失败:', error)
-  } finally {
-    isLoadingWeekday.value = false
-  }
-}
-
-// 加载月份活跃度数据
-async function loadMonthlyActivity() {
-  if (!props.session.id) return
-  isLoadingMonthly.value = true
-  try {
-    monthlyActivity.value = await window.chatApi.getMonthlyActivity(props.session.id, props.timeFilter)
-  } catch (error) {
-    console.error('加载月份活跃度失败:', error)
-  } finally {
-    isLoadingMonthly.value = false
   }
 }
 
@@ -134,7 +112,6 @@ watch(
   () => [props.session.id, props.timeFilter],
   () => {
     loadWeekdayActivity()
-    loadMonthlyActivity()
   },
   { immediate: true, deep: true }
 )
@@ -263,17 +240,6 @@ watch(
         </div>
       </SectionCard>
     </div>
-
-    <!-- 时间分布图表 -->
-    <ActivityTimeDistribution
-      :hourly-activity="hourlyActivity"
-      :weekday-activity="weekdayActivity"
-      :monthly-activity="monthlyActivity"
-      :is-loading-weekday="isLoadingWeekday"
-      :is-loading-monthly="isLoadingMonthly"
-      :weekday-names="weekdayNames"
-      :weekday-vs-weekend="weekdayVsWeekend"
-    />
 
     <!-- 每日消息趋势 -->
     <DailyTrendCard :daily-activity="dailyActivity" :daily-chart-data="dailyChartData" />

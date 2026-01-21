@@ -30,7 +30,7 @@ const activeSubTab = ref('message')
 <template>
   <div class="flex h-full flex-col">
     <!-- 子 Tab 导航 -->
-    <SubTabs v-model="activeSubTab" :items="subTabs" persist-key="privateViewTab" />
+    <SubTabs v-model="activeSubTab" :items="subTabs" persist-key="groupViewTab" />
 
     <!-- 子 Tab 内容 -->
     <div class="flex-1 min-h-0 overflow-auto">
